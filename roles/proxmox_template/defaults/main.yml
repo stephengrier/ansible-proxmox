@@ -1,0 +1,32 @@
+---
+
+# --- Proxmox API ---
+proxmox_api_host: "pve01.example.com"
+proxmox_api_user: "root@pam"
+proxmox_api_token_id: ""
+proxmox_api_token_secret: ""
+proxmox_validate_certs: false
+
+# --- Node ---
+proxmox_node: "pve01"
+
+# --- Storage ---
+proxmox_storage: "local-lvm"
+proxmox_bridge: "vmbr0"
+
+# --- VM defaults ---
+proxmox_memory: 1024
+proxmox_cores: 4
+proxmox_cpu: "host"
+proxmox_disk_size: 8
+
+# --- Cloud-init ---
+proxmox_ciuser: "proxmox"
+proxmox_ipconfig: "ip6=auto,ip=dhcp"
+proxmox_ssh_public_key: "{{ ssh_public_key }}"
+
+# --- Image handling ---
+proxmox_image_cache: "/var/lib/vz/template/cache"
+
+# --- Templates list ---
+proxmox_templates: []

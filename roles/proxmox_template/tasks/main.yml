@@ -1,0 +1,13 @@
+---
+
+- name: Ensure image directory exists
+  file:
+    path: "{{ proxmox_image_cache }}"
+    state: directory
+    mode: "0755"
+
+- name: Create Proxmox templates
+  include_tasks: create_template.yml
+  loop: "{{ proxmox_templates }}"
+  loop_control:
+    loop_var: template

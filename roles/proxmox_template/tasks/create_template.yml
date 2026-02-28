@@ -1,0 +1,99 @@
+---
+
+- name: Download cloud image
+  ansible.builtin.get_url:
+    url: "{{ template.url }}"
+    dest: "{{ proxmox_image_cache }}/{{ template.filename }}"
+    mode: "0644"
+
+- name: Decompress .xz images if needed
+  ansible.builtin.command: >
+    xz -dk -f {{ proxmox_image_cache }}/{{ template.filename }}
+  args:
+    creates: "{{ proxmox_image_cache }}/{{ template.filename | regex_replace('\\.xz$', '') }}"
+  when: template.filename.endswith('.xz')
+
+- name: Set decompressed filename
+  set_fact:
+    image_file: >-
+      {{
+        template.filename[:-3]
+        if template.filename.endswith('.xz')
+        else template.filename
+      }}
+
+- name: Ensure VM exists with base config
+  community.general.proxmox_kvm:
+    api_host: "{{ proxmox_api_host }}"
+    api_user: "{{ proxmox_api_user }}"
+    api_token_id: "{{ proxmox_api_token_id }}"
+    api_token_secret: "{{ proxmox_api_token_secret }}"
+    validate_certs: "{{ proxmox_validate_certs }}"
+
+    node: "{{ proxmox_node }}"
+    vmid: "{{ template.vmid }}"
+    name: "{{ template.name }}"
+    ostype: l26
+
+    memory: "{{ template.memory | default(proxmox_memory) }}"
+    cores: "{{ template.cores | default(proxmox_cores) }}"
+    cpu: "{{ template.cpu | default(proxmox_cpu) }}"
+
+    net:
+      net0: "virtio,bridge={{ proxmox_bridge }}"
+
+    scsihw: virtio-scsi-single
+
+    ide:
+      ide2: "{{ proxmox_storage }}:cloudinit"
+
+    boot: "order=scsi0"
+
+    serial:
+      serial0: 'socket'
+    vga: "serial0"
+
+    agent: "enabled=1,fstrim_cloned_disks=1"
+
+    ciuser: "{{ proxmox_ciuser }}"
+    sshkeys: "{{ proxmox_ssh_public_key }}"
+    ipconfig:
+      ipconfig0: "{{ proxmox_ipconfig }}"
+
+    state: present
+
+- name: Get VM config
+  command: qm config {{ template.vmid }}
+  register: vm_config
+  changed_when: false
+
+- name: Import disk
+  command: >
+    qm set {{ template.vmid }}
+    --scsi0 {{ proxmox_storage }}:0,import-from={{ proxmox_image_cache }}/{{ image_file }},discard=on
+  when: "'scsi0:' not in vm_config.stdout"
+
+- name: Ensure disk size
+  community.general.proxmox_disk:
+    api_host: "{{ proxmox_api_host }}"
+    api_user: "{{ proxmox_api_user }}"
+    api_token_id: "{{ proxmox_api_token_id }}"
+    api_token_secret: "{{ proxmox_api_token_secret }}"
+    validate_certs: "{{ proxmox_validate_certs }}"
+
+    vmid: "{{ template.vmid }}"
+    disk: scsi0
+    size: "{{ template.disk_size | default(proxmox_disk_size) }}G"
+    state: resized
+
+- name: Convert VM to template
+  community.general.proxmox_kvm:
+    api_host: "{{ proxmox_api_host }}"
+    api_user: "{{ proxmox_api_user }}"
+    api_token_id: "{{ proxmox_api_token_id }}"
+    api_token_secret: "{{ proxmox_api_token_secret }}"
+    validate_certs: "{{ proxmox_validate_certs }}"
+
+    node: "{{ proxmox_node }}"
+    vmid: "{{ template.vmid }}"
+    state: template
