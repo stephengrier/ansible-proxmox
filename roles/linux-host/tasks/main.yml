@@ -1,0 +1,21 @@
+- name: "Check if host is a docker container"
+  stat:
+    path: "/.dockerenv"
+  register: host_is_container
+
+- name: Install packages
+  apt:
+    name: '{{ item }}'
+    state: present
+    update_cache: yes
+  loop: '{{ packages.install }}'
+  loop_control:
+    label: Installing {{ item }}
+
+- name: Set cpufreq governor to powersave
+  lineinfile:
+    path: /etc/default/grub.d/ansible.cfg
+    regex: '^GRUB_CMDLINE_LINUX_DEFAULT='
+    line: 'GRUB_CMDLINE_LINUX_DEFAULT="quiet cpufreq.default_governor={{ cpufreq_governor }}"'
+    create: true
+  notify: Update grub

@@ -1,0 +1,7 @@
+- name: Configure a Proxmox node
+  hosts: all
+  gather_facts: no
+
+  roles:
+    - linux-host
+    - proxmox-node
