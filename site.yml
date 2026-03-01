@@ -3,5 +3,5 @@
   gather_facts: no
 
   roles:
-    - linux-host
-    - proxmox-node
+    - linux_host
+    - proxmox_node
