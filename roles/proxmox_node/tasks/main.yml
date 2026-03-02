@@ -45,3 +45,14 @@
     iface: vmbr3
     iface_type: bridge
     autostart: true
+
+- name: Check VM list is defined
+  assert:
+    that: proxmox_vms | length > 0
+    fail_msg: "proxmox_vms must contain at least one VM definition."
+
+- name: Create VMs from list
+  include_tasks: create_vm.yml
+  loop: "{{ proxmox_vms }}"
+  loop_control:
+    loop_var: vm

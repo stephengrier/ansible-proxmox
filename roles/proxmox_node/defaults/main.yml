@@ -1,0 +1,20 @@
+proxmox_api_host: "proxmox.example.com"
+proxmox_api_user: "root@pam"
+proxmox_api_token_id: ""
+proxmox_api_token_secret: ""
+proxmox_validate_certs: false
+
+proxmox_node: "pve"
+
+template_name: ''
+vm_storage: "local-lvm"
+vm_full_clone: true
+
+default_memory: 2048
+default_cores: 2
+default_sockets: 1
+default_cpu: "host"
+default_bridge: "vmbr0"
+default_disk_size: "8G"
+
+proxmox_vms: []

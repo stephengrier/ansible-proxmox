@@ -1,0 +1,115 @@
+---
+
+- name: Get VM info
+  community.general.proxmox_vm_info:
+    api_host: "{{ proxmox_api_host }}"
+    api_user: "{{ proxmox_api_user }}"
+    api_token_id: "{{ proxmox_api_token_id }}"
+    api_token_secret: "{{ proxmox_api_token_secret }}"
+    validate_certs: "{{ proxmox_validate_certs }}"
+    node: "{{ proxmox_node }}"
+    vmid: "{{ vm.vmid }}"
+    config: 'current'
+  register: vm_info
+  failed_when: false
+  changed_when: false
+
+- name: Clone template if VM does not exist
+  community.general.proxmox_kvm:
+    api_host: "{{ proxmox_api_host }}"
+    api_user: "{{ proxmox_api_user }}"
+    api_token_id: "{{ proxmox_api_token_id }}"
+    api_token_secret: "{{ proxmox_api_token_secret }}"
+    validate_certs: "{{ proxmox_validate_certs }}"
+
+    node: "{{ proxmox_node }}"
+    newid: "{{ vm.vmid }}"
+    name: "{{ vm.name }}"
+    clone: "{{ vm.template_name | default(template_name) }}"
+    full: "{{ vm.full_clone | default(vm_full_clone) }}"
+    storage: "{{ vm.storage | default(vm_storage) }}"
+    timeout: 600
+    state: present
+
+- name: Update VM settings if they have changed
+  community.general.proxmox_kvm:
+    api_host: "{{ proxmox_api_host }}"
+    api_user: "{{ proxmox_api_user }}"
+    api_token_id: "{{ proxmox_api_token_id }}"
+    api_token_secret: "{{ proxmox_api_token_secret }}"
+    validate_certs: "{{ proxmox_validate_certs }}"
+
+    node: "{{ proxmox_node }}"
+    vmid: "{{ vm.vmid }}"
+    name: "{{ vm.name }}"
+    cores: "{{ vm.cores | default(default_cores) }}"
+    sockets: "{{ vm.sockets | default(default_sockets) }}"
+    cpu: "{{ vm.cpu | default(default_cpu) }}"
+    memory: "{{ vm.memory | default(default_memory) }}"
+    update: true
+#    state: present
+  when: >
+    vm_info.proxmox_vms | length > 0 and
+    (
+      vm_info.proxmox_vms[0].config.memory != (vm.memory | default(default_memory)) or
+      vm_info.proxmox_vms[0].config.cores != (vm.cores | default(default_cores)) or
+      vm_info.proxmox_vms[0].config.sockets is not defined or
+      vm_info.proxmox_vms[0].config.sockets != (vm.sockets | default(default_sockets)) or
+      vm_info.proxmox_vms[0].config.cpu != (vm.cpu | default(default_cpu))
+    )
+
+- name: Configure network
+  community.proxmox.proxmox_nic:
+    api_host: "{{ proxmox_api_host }}"
+    api_user: "{{ proxmox_api_user }}"
+    api_token_id: "{{ proxmox_api_token_id }}"
+    api_token_secret: "{{ proxmox_api_token_secret }}"
+    validate_certs: "{{ proxmox_validate_certs }}"
+
+    vmid: "{{ vm.vmid }}"
+    interface: net0
+
+    bridge: "{{ vm.bridge | default('vmbr0') }}"
+    model: virtio
+    tag: "{{ vm.vlan | default(omit) }}"
+    firewall: true
+
+    state: present
+
+- name: Refresh VM info after clone/update
+  community.general.proxmox_vm_info:
+    api_host: "{{ proxmox_api_host }}"
+    api_user: "{{ proxmox_api_user }}"
+    api_token_id: "{{ proxmox_api_token_id }}"
+    api_token_secret: "{{ proxmox_api_token_secret }}"
+    validate_certs: "{{ proxmox_validate_certs }}"
+    node: "{{ proxmox_node }}"
+    vmid: "{{ vm.vmid }}"
+    config: 'current'
+  register: updated_vm_info
+  changed_when: false
+
+- name: Resize disk if smaller than desired
+  community.general.proxmox_disk:
+    api_host: "{{ proxmox_api_host }}"
+    api_user: "{{ proxmox_api_user }}"
+    api_token_id: "{{ proxmox_api_token_id }}"
+    api_token_secret: "{{ proxmox_api_token_secret }}"
+    validate_certs: "{{ proxmox_validate_certs }}"
+
+    vmid: "{{ vm.vmid }}"
+    disk: scsi0
+    size: "{{ vm.disk_size | default(default_disk_size) }}"
+    state: resized
+
+- name: Ensure VM running if requested
+  community.general.proxmox_kvm:
+    api_host: "{{ proxmox_api_host }}"
+    api_user: "{{ proxmox_api_user }}"
+    api_token_id: "{{ proxmox_api_token_id }}"
+    api_token_secret: "{{ proxmox_api_token_secret }}"
+    validate_certs: "{{ proxmox_validate_certs }}"
+    node: "{{ proxmox_node }}"
+    vmid: "{{ vm.vmid }}"
+    state: started
+  when: vm.start | default(false)
