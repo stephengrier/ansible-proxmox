@@ -6,21 +6,19 @@
     dest: "{{ proxmox_image_cache }}/{{ template.filename }}"
     mode: "0644"
 
-- name: Decompress .xz images if needed
+- name: Decompress .xz and .gz images if needed
   ansible.builtin.command: >
-    xz -dk -f {{ proxmox_image_cache }}/{{ template.filename }}
+    {{ 'xz' if template.filename.endswith('.xz') else 'gzip' }}
+    -dk -f {{ proxmox_image_cache }}/{{ template.filename }}
   args:
-    creates: "{{ proxmox_image_cache }}/{{ template.filename | regex_replace('\\.xz$', '') }}"
-  when: template.filename.endswith('.xz')
+    creates: "{{ proxmox_image_cache }}/{{ template.filename | regex_replace('\\.(xz|gz)$', '') }}"
+  register: decompress_result
+  failed_when: decompress_result.rc not in [0, 2]
+  when: template.filename.endswith(('.xz', '.gz'))
 
 - name: Set decompressed filename
-  set_fact:
-    image_file: >-
-      {{
-        template.filename[:-3]
-        if template.filename.endswith('.xz')
-        else template.filename
-      }}
+  ansible.builtin.set_fact:
+    image_file: "{{ template.filename | regex_replace('\\.(xz|gz)$', '') }}"
 
 - name: Ensure VM exists with base config
   community.general.proxmox_kvm:
