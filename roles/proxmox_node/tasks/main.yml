@@ -46,6 +46,41 @@
     iface_type: bridge
     autostart: true
 
+- name: Create host-only bridge for test network 1
+  community.proxmox.proxmox_node_network:
+    api_host: '{{ api_host }}'
+    api_user: '{{ api_user }}'
+    api_token_id: '{{ api_token_id }}'
+    api_token_secret: '{{ api_token_secret }}'
+    node: proxmox1
+    state: present
+    iface: vmbr4094
+    iface_type: bridge
+    bridge_ports: ''
+    autostart: true
+
+- name: Create host-only bridge for test network 2
+  community.proxmox.proxmox_node_network:
+    api_host: '{{ api_host }}'
+    api_user: '{{ api_user }}'
+    api_token_id: '{{ api_token_id }}'
+    api_token_secret: '{{ api_token_secret }}'
+    node: proxmox1
+    state: present
+    iface: vmbr4093
+    iface_type: bridge
+    bridge_ports: ''
+    autostart: true
+
+- name: Apply network configuration
+  community.proxmox.proxmox_node_network:
+    api_host: '{{ api_host }}'
+    api_user: '{{ api_user }}'
+    api_token_id: '{{ api_token_id }}'
+    api_token_secret: '{{ api_token_secret }}'
+    node: "{{ proxmox_node }}"
+    state: apply
+
 - name: Check VM list is defined
   assert:
     that: proxmox_vms | length > 0
