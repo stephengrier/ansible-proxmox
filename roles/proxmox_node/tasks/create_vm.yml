@@ -67,14 +67,18 @@
     validate_certs: "{{ proxmox_validate_certs }}"
 
     vmid: "{{ vm.vmid }}"
-    interface: net0
+    interface: "{{ nic.interface }}"
 
-    bridge: "{{ vm.bridge | default('vmbr0') }}"
-    model: virtio
-    tag: "{{ vm.vlan | default(omit) }}"
-    firewall: true
+    bridge: "{{ nic.bridge | default('vmbr0') }}"
+    model: "{{ nic.model | default('virtio') }}"
+    tag: "{{ nic.vlan | default(omit) }}"
+    firewall: "{{ nic.firewall | default('true') }}"
 
     state: present
+  loop: "{{ vm.nics }}"
+  loop_control:
+    loop_var: nic
+    label: "{{ vm.vmid }} / {{ nic.interface }}"
 
 - name: Refresh VM info after clone/update
   community.general.proxmox_vm_info:
