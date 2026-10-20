@@ -22,3 +22,25 @@
             disk_size: "10G"
             bridge: 'vmbr3'
             start: true
+            nics:
+              - interface: 'net0'
+                bridge: 'vmbr3'
+          - vmid: 1201
+            template_name: 'tmpl-openwrt-22.03.5'
+            name: 'openwrt-test'
+            memory: '512'
+            cores: 2
+            disk_size: '1G'
+            start: true
+            nics:
+              - interface: 'net0'
+                bridge: 'vmbr3'
+              - interface: 'net1'
+                bridge: 'vmbr4094'
+                firewall: false
+              - interface: 'net2'
+                bridge: 'vmbr4093'
+                firewall: false
+              - interface: 'net3'
+                bridge: 'vmbr2'
+                firewall: false
