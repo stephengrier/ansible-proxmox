@@ -42,5 +42,5 @@
                 bridge: 'vmbr4093'
                 firewall: false
               - interface: 'net3'
-                bridge: 'vmbr2'
+                bridge: 'vmbr4092'
                 firewall: false

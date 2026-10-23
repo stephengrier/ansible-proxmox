@@ -72,6 +72,19 @@
     bridge_ports: ''
     autostart: true
 
+- name: Create a second host-only bridge for test network 2
+  community.proxmox.proxmox_node_network:
+    api_host: '{{ api_host }}'
+    api_user: '{{ api_user }}'
+    api_token_id: '{{ api_token_id }}'
+    api_token_secret: '{{ api_token_secret }}'
+    node: proxmox1
+    state: present
+    iface: vmbr4092
+    iface_type: bridge
+    bridge_ports: ''
+    autostart: true
+
 - name: Apply network configuration
   community.proxmox.proxmox_node_network:
     api_host: '{{ api_host }}'
