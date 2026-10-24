@@ -20,11 +20,20 @@
             memory: '1024'
             cores: 4
             disk_size: "10G"
-            bridge: 'vmbr3'
             start: true
             nics:
               - interface: 'net0'
-                bridge: 'vmbr3'
+                bridge: 'vmbr4092'
+          - vmid: 1202
+            template_name: 'tmpl-debian-13'
+            name: 'testvm2'
+            memory: '512'
+            cores: 2
+            disk_size: "5G"
+            start: true
+            nics:
+              - interface: 'net0'
+                bridge: 'vmbr4093'
           - vmid: 1201
             template_name: 'tmpl-openwrt-22.03.5'
             name: 'openwrt-test'
