@@ -40,6 +40,25 @@
             memory: '512'
             cores: 2
             disk_size: '1G'
+            start: false
+            nics:
+              - interface: 'net0'
+                bridge: 'vmbr3'
+              - interface: 'net1'
+                bridge: 'vmbr4094'
+                firewall: false
+              - interface: 'net2'
+                bridge: 'vmbr4093'
+                firewall: false
+              - interface: 'net3'
+                bridge: 'vmbr4092'
+                firewall: false
+          - vmid: 1203
+            template_name: 'tmpl-openwrt-25.12.6'
+            name: 'openwrt-upgrade'
+            memory: '512'
+            cores: 2
+            disk_size: '1G'
             start: true
             nics:
               - interface: 'net0'
